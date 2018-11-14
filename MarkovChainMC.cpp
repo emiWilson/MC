@@ -116,12 +116,6 @@ double Energy(){
 	return E;
 }
 
-double EnergySq(){
-
-
-	return Esq;
-}
-
 double Magnetization(){
 	double Mag = 0;
 	for (int i = 0; i < N; i ++){
@@ -132,13 +126,6 @@ double Magnetization(){
 	return Mag;
 
 }
-
-double MagnetizationSq(){
-	
-	return MagSq;
-
-}
-
 
 void Save(double temp, double E, double M, double Cv, double X){
 	
@@ -176,11 +163,11 @@ int main(){
 
  	/*** Initialize T array ***/ 
  	double maxT = 4;
- 	double dT = 0.1;
- 	
- 	double EqSteps = 10;
 
- 	int numT = 4000;
+ 	double EqSteps = 1000;
+
+ 	int numT = 100;
+ 	double dT = maxT / numT;
 
  	double T[numT];
 
@@ -194,25 +181,48 @@ int main(){
 	cout << "Initial Field" << endl;
 	printSpinsToScreen();
 
+	double en;
+	double mag;
+	double en2;
+	double mag2;
+
+	double n1 = 1.0 / (N*M*EqSteps);
+	double n2 = 1.0 / (N*M*EqSteps*EqSteps);
+
 	for (int t = 0; t < numT; t++){
 		double temp = T[t];
+		en = mag = en2 = mag2 = 0;
+
+		double invT = 1.0/temp; 
+		double invT2 = invT * invT;
+
+		//do EqSteps equillibration steps at each temperature step
 		for (int eq = 0; eq < EqSteps; eq++){
 			//NxM montecarlo steps per time step
 			for (int n = 0; n < N; n++){
 				for (int m = 0; m < M; m++){
+					
 					spinArr[n][m] = metropolis(temp, n, m);
 
 				}
 			}
+			double Ene = Energy();
+			double Mag = Magnetization();
+
+			en = en + Ene;
+			mag = mag + Mag;
+			en2 = en2 + Ene*Ene;
+			mag2 = mag2 + Mag * Mag;
+
 		}
-		double Eng = Energy() / (N*M);
-		double Mag = (Magnetization()) / (N*M); //make indep if spins are all up or all  (ok to do? maybe not.)
-		double Esq = EnergySq() /(N*M * N*M);
-		double MagSq = MagnetizationSq()/(N*M * N*M);
 
-		double Cv = (Esq - Eng*Eng) / (dT*dT) ; 
-		double X = (MagSq - Mag*Mag) / dT ;
 
+		double Eng = en * n1;
+		double Mag = mag * n1;
+
+		double Cv = (en2*n1 - en * en * n2) / (invT2) ; 
+		double X = (mag2*n1 - mag * mag * n2) / (invT);
+		//cout << temp << endl;
 		Save(temp, Eng, Mag, Cv, X);
 
 	}
