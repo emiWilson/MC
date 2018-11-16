@@ -1,0 +1,6 @@
+N 30
+M 30
+Tmax 3
+Tmin 2
+numTsteps 100
+EqSteps 10000
